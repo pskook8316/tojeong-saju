@@ -177,15 +177,28 @@
 
   /* ---------- 입력/흐름 ---------- */
   function readInput() {
-    const y = Number($('by').value.trim()), m = Number($('bm').value.trim()), d = Number($('bd').value.trim());
-    if (![y, m, d].every(Number.isInteger) || y < 1900 || y > 2099 || m < 1 || m > 12 || d < 1 || d > 31) {
-      throw new Error('생년월일을 숫자로 정확히 입력하세요. (년 1900~2099, 월 1~12, 일 1~31)');
+    const dm = $('date').value.trim().match(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})$/);
+    const ds = $('date').value.replace(/\D/g, '');
+    let y, m, d;
+    if (/^\d{4}\D+\d{1,2}\D+\d{1,2}$/.test($('date').value.trim()) && dm) { y = +dm[1]; m = +dm[2]; d = +dm[3]; }
+    else if (ds.length === 8) { y = +ds.slice(0, 4); m = +ds.slice(4, 6); d = +ds.slice(6, 8); }
+    if (!y || y < 1900 || y > 2099 || m < 1 || m > 12 || d < 1 || d > 31) {
+      throw new Error('생년월일을 1990-05-15 또는 19900515 형식으로 입력하세요. (1900~2099년)');
+    }
+    if (document.querySelector('input[name=cal]:checked').value === 'solar') {
+      const dt = new Date(y, m - 1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) throw new Error('존재하지 않는 양력 날짜입니다. 월·일을 확인하세요.');
     }
     let hour = null, minute = 0;
     if (!$('noTime').checked) {
-      const h = Number($('th').value.trim()), mi = Number($('tm').value.trim() || 0);
-      if (!$('th').value.trim() || !Number.isInteger(h) || !Number.isInteger(mi) || h < 0 || h > 23 || mi < 0 || mi > 59) {
-        throw new Error('태어난 시각을 24시간제 숫자로 입력하세요. (시 0~23, 분 0~59) 모르면 "태어난 시각 모름"을 선택하세요.');
+      const t = $('time').value.trim();
+      let mt = t.match(/^(\d{1,2})\D+(\d{1,2})$/);
+      let h, mi;
+      if (mt) { h = +mt[1]; mi = +mt[2]; }
+      else if (/^\d{3,4}$/.test(t)) { h = +t.slice(0, t.length - 2); mi = +t.slice(-2); }
+      else if (/^\d{1,2}$/.test(t)) { h = +t; mi = 0; }
+      if (h === undefined || h < 0 || h > 23 || mi < 0 || mi > 59) {
+        throw new Error('태어난 시각을 14:30 또는 1430 형식(24시간제)으로 입력하세요. 모르면 "태어난 시각 모름"을 선택하세요.');
       }
       hour = h; minute = mi;
     }
@@ -210,7 +223,7 @@
       $('result').hidden = false;
       if (!sample) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (e) {
-      err.textContent = '날짜를 확인해 주세요. 음력 날짜가 존재하지 않거나 범위를 벗어났을 수 있습니다.';
+      err.textContent = '풀이할 수 없는 날짜입니다. 음력 날짜가 존재하지 않거나 범위를 벗어났을 수 있습니다. (' + (e && e.message ? e.message : e) + ')';
       err.hidden = false;
     }
   }
@@ -247,12 +260,12 @@
     $('name').value = p.name || '';
     document.querySelector(`input[name=gender][value=${p.gender}]`).checked = true;
     document.querySelector(`input[name=cal][value=${p.calendar}]`).checked = true;
-    $('by').value = p.y; $('bm').value = p.m; $('bd').value = p.d;
-    if (p.hour === null) { $('noTime').checked = true; } else { $('noTime').checked = false; $('th').value = p.hour; $('tm').value = p.minute; }
+    $('date').value = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
+    if (p.hour === null) { $('noTime').checked = true; } else { $('noTime').checked = false; $('time').value = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`; }
     syncTime();
   }
 
-  function syncTime() { $('th').disabled = $('tm').disabled = $('noTime').checked; }
+  function syncTime() { $('time').disabled = $('noTime').checked; }
   $('noTime').addEventListener('change', syncTime);
   $('form').addEventListener('submit', (ev) => { ev.preventDefault(); try { run(readInput()); } catch (e) { $('err').textContent = e.message; $('err').hidden = false; } });
   $('year').addEventListener('change', () => { if (!$('result').hidden) { try { run(readInput()); } catch (e) { /* 무시 */ } } });
@@ -274,10 +287,7 @@
     if (y === now) o.selected = true;
     $('year').appendChild(o);
   }
-  ['by', 'bm', 'bd', 'th', 'tm'].forEach((id) => {
-    $(id).addEventListener('focus', () => $(id).select());
-    $(id).addEventListener('input', () => { $(id).value = $(id).value.replace(/\D/g, ''); });
-  });
+  ['date', 'time'].forEach((id) => $(id).addEventListener('focus', () => $(id).select()));
   syncTime(); renderSaved();
   run(readInput(), true); // 예시 값으로 첫 화면을 채운다
 })();

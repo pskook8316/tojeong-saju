@@ -34,19 +34,8 @@
           <label><input type="radio" name="cal" value="lunar"><span>음력</span></label>
           <label><input type="radio" name="cal" value="leap"><span>음력 윤달</span></label>
         </fieldset>
-        <fieldset class="ymd"><legend>생년월일 (숫자로 직접 입력)</legend>
-          <div class="ymd-row">
-            <label><input id="by" type="text" inputmode="numeric" maxlength="4" placeholder="1990" value="1990" aria-label="태어난 해" required><span>년</span></label>
-            <label><input id="bm" type="text" inputmode="numeric" maxlength="2" placeholder="5" value="5" aria-label="태어난 달" required><span>월</span></label>
-            <label><input id="bd" type="text" inputmode="numeric" maxlength="2" placeholder="15" value="15" aria-label="태어난 날" required><span>일</span></label>
-          </div>
-        </fieldset>
-        <fieldset class="ymd"><legend>태어난 시각 (24시간제, 숫자로 직접 입력)</legend>
-          <div class="ymd-row">
-            <label><input id="th" type="text" inputmode="numeric" maxlength="2" placeholder="14" value="14" aria-label="태어난 시" required><span>시</span></label>
-            <label><input id="tm" type="text" inputmode="numeric" maxlength="2" placeholder="30" value="30" aria-label="태어난 분" required><span>분</span></label>
-          </div>
-        </fieldset>
+        <label>생년월일<input id="date" type="text" inputmode="numeric" placeholder="1990-05-15 또는 19900515" value="1990-05-15" maxlength="10" required></label>
+        <label>태어난 시각<input id="time" type="text" inputmode="numeric" placeholder="14:30 또는 1430" value="14:30" maxlength="5"></label>
         <label class="check"><input id="noTime" type="checkbox"><span>태어난 시각 모름</span></label>
         <label>토정비결 보는 해
           <select id="year"></select>
