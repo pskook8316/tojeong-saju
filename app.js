@@ -177,10 +177,18 @@
 
   /* ---------- 입력/흐름 ---------- */
   function readInput() {
-    const [y, m, d] = $('date').value.split('-').map(Number);
-    if (!y) throw new Error('생년월일을 입력하세요.');
+    const y = Number($('by').value.trim()), m = Number($('bm').value.trim()), d = Number($('bd').value.trim());
+    if (![y, m, d].every(Number.isInteger) || y < 1900 || y > 2099 || m < 1 || m > 12 || d < 1 || d > 31) {
+      throw new Error('생년월일을 숫자로 정확히 입력하세요. (년 1900~2099, 월 1~12, 일 1~31)');
+    }
     let hour = null, minute = 0;
-    if (!$('noTime').checked && $('time').value) { const [h, mi] = $('time').value.split(':').map(Number); hour = h; minute = mi; }
+    if (!$('noTime').checked) {
+      const h = Number($('th').value.trim()), mi = Number($('tm').value.trim() || 0);
+      if (!$('th').value.trim() || !Number.isInteger(h) || !Number.isInteger(mi) || h < 0 || h > 23 || mi < 0 || mi > 59) {
+        throw new Error('태어난 시각을 24시간제 숫자로 입력하세요. (시 0~23, 분 0~59) 모르면 "태어난 시각 모름"을 선택하세요.');
+      }
+      hour = h; minute = mi;
+    }
     return {
       name: $('name').value.trim(),
       gender: document.querySelector('input[name=gender]:checked').value,
@@ -239,12 +247,12 @@
     $('name').value = p.name || '';
     document.querySelector(`input[name=gender][value=${p.gender}]`).checked = true;
     document.querySelector(`input[name=cal][value=${p.calendar}]`).checked = true;
-    $('date').value = `${p.y}-${String(p.m).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`;
-    if (p.hour === null) { $('noTime').checked = true; } else { $('noTime').checked = false; $('time').value = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`; }
+    $('by').value = p.y; $('bm').value = p.m; $('bd').value = p.d;
+    if (p.hour === null) { $('noTime').checked = true; } else { $('noTime').checked = false; $('th').value = p.hour; $('tm').value = p.minute; }
     syncTime();
   }
 
-  function syncTime() { $('time').disabled = $('noTime').checked; }
+  function syncTime() { $('th').disabled = $('tm').disabled = $('noTime').checked; }
   $('noTime').addEventListener('change', syncTime);
   $('form').addEventListener('submit', (ev) => { ev.preventDefault(); try { run(readInput()); } catch (e) { $('err').textContent = e.message; $('err').hidden = false; } });
   $('year').addEventListener('change', () => { if (!$('result').hidden) { try { run(readInput()); } catch (e) { /* 무시 */ } } });
@@ -266,6 +274,10 @@
     if (y === now) o.selected = true;
     $('year').appendChild(o);
   }
+  ['by', 'bm', 'bd', 'th', 'tm'].forEach((id) => {
+    $(id).addEventListener('focus', () => $(id).select());
+    $(id).addEventListener('input', () => { $(id).value = $(id).value.replace(/\D/g, ''); });
+  });
   syncTime(); renderSaved();
   run(readInput(), true); // 예시 값으로 첫 화면을 채운다
 })();
